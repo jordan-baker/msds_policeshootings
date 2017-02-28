@@ -1,4 +1,5 @@
-setwd("/Users/frankiezeager/Documents/Graduate School/Spring 2017/Machine Learning/project 1/git/msds_policeshootings/data")
+#setwd("/Users/frankiezeager/Documents/Graduate School/Spring 2017/Machine Learning/project 1/git/msds_policeshootings/data")
+#setwd("/Users/jordanbaker/Documents/School/University of Virginia/Spring 2017/Machine Learning")
 
 library(readr)
 library(xlsx)
@@ -8,7 +9,7 @@ library(rpart)
 library(rpart.plot)
 library(caret)
 
-set.seed(12000)
+set.seed(12002)
 
 #data sources
 #washington post: https://github.com/washingtonpost/data-police-shootings
@@ -128,7 +129,7 @@ police <- subset(police, police$state != 'DC')
 
 
 #define diversity (is the police dept representative of the population demographics?)
-police$diversity <- police$pct_police_white - police$white
+police$diversity <- abs(police$pct_police_white - police$white)
 
 #define killrate
 police$killrate <- police$num_killed/police$statepop
@@ -155,6 +156,11 @@ trained_model<-train(formula,police,method='rpart')
 plot(trained_model$finalModel)
 text(trained_model$finalModel)
 
+#text output of tree
+#1) root 50 9 low (0.1800000 0.8200000)  
+#  2) murder_clearance>=67.05 8 3 high (0.6250000 0.3750000) *
+#  3) murder_clearance< 67.05 42 4 low (0.0952381 0.9047619) *
+
 #check out performance 
 summary(trained_model$finalModel)
 printcp(trained_model$finalModel)
@@ -176,6 +182,13 @@ notpressured <- police[police$pressure == 'not pressured', ]
 
 #test the hypothesis that pressured offers have higher killrates than officers who arent pressured
 t.test(pressured$killrate, notpressured$killrate, alternative="greater", paired=FALSE)
+
+#result=pressured officers do not have statistically higher killrates than non-pressured officers
+#t=-2.2717
+#df=47.142
+#p-value=0.9861
+#mean of x=5.784390e-06
+#mena of y=8.000415e-06
 
 #export police file
 write.xlsx(police, "police_agg.xlsx")
