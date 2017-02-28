@@ -6,8 +6,9 @@ library(plyr)
 library(dplyr)
 library(rpart)
 library(rpart.plot)
+library(caret)
 
-set.seed(545)
+set.seed(12000)
 
 #data sources
 #washington post: https://github.com/washingtonpost/data-police-shootings
@@ -131,6 +132,7 @@ police$diversity <- police$pct_police_white - police$white
 
 #define killrate
 police$killrate <- police$num_killed/police$statepop
+hist(police$killrate) #the killrate looks skewed to the right, but there appears to be two clusters
 
 #k-means cluster police kill rates into two clusters (high and low)
 clusters <- kmeans(police$killrate, centers = 2)
@@ -142,10 +144,32 @@ police$rank <- ifelse(police$rank ==  1,'high', 'low')
 
 ####### Model Building #######
 
+### Decision Tree ###
+#cross validation (not enough data for validation set, so using CV accuracy)
+formula=as.formula(rank~violence_rate+murder_rate+violent_clearance+murder_clearance+non_white+pct_armed+
+                     pct_mental_illness+pct_threat_attack+
+                     pct_flee+pct_body_cam+num_killed+diversity)
+trained_model<-train(formula,police,method='rpart')
+
+#look at tree
+plot(trained_model$finalModel)
+text(trained_model$finalModel)
+
+#check out performance 
+summary(trained_model$finalModel)
+printcp(trained_model$finalModel)
+#variable importance
+#murder_clearance     pct_body_cam 
+#89                      11 
+
+#root node error: 9/50=.18, so accuracy =1-.18=.82
+
+#without CV (lines 161-177)
 #split the model into testing and training data
 indices <- sample(seq_len(nrow(police)), size = 35)
 train <- police[indices,]
 test <- police[-indices,]
+
 
 #generate a decision tree
 model <- rpart(rank~violence_rate+murder_rate+violent_clearance+murder_clearance+non_white+pct_armed+
