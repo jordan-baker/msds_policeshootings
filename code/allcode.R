@@ -167,3 +167,6 @@ notpressured <- police[police$pressure == 'not pressured', ]
 
 #test the hypothesis that pressured offers have higher killrates than officers who arent pressured
 t.test(pressured$killrate, notpressured$killrate, alternative="greater", paired=FALSE)
+
+#export police file
+write.xlsx(police, "police_agg.xlsx")
