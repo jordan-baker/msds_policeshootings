@@ -164,7 +164,7 @@ printcp(trained_model$finalModel)
 
 #root node error: 9/50=.18, so accuracy =1-.18=.82
 
-#without CV (lines 161-177)
+#without CV (lines 161-177): delete this?
 #split the model into testing and training data
 indices <- sample(seq_len(nrow(police)), size = 35)
 train <- police[indices,]
@@ -188,6 +188,9 @@ table(pred=predict2,true=test$rank)
 
 #fraction of correct predictions
 mean(predict2==test$rank)
+
+
+#### T-test ####
 
 #identify states that may be under pressure due to low clearance rates
 police$pressure <- ifelse(police$murder_clearance > mean(police$murder_clearance),'not pressured', 'pressured')
