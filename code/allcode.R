@@ -164,31 +164,6 @@ printcp(trained_model$finalModel)
 
 #root node error: 9/50=.18, so accuracy =1-.18=.82
 
-#without CV (lines 161-177): delete this?
-#split the model into testing and training data
-indices <- sample(seq_len(nrow(police)), size = 35)
-train <- police[indices,]
-test <- police[-indices,]
-
-
-#generate a decision tree
-model <- rpart(rank~violence_rate+murder_rate+violent_clearance+murder_clearance+non_white+pct_armed+
-                 pct_mental_illness+pct_threat_attack+
-                 pct_flee+pct_body_cam+num_killed+diversity, data = train)
-
-#visualise the tree
-prp(model)
-
-#generate predictions
-predict <- predict(model, newdata=test[,-1])
-predict2 <- ifelse(predict[,1] > 0.5, "high", "low")
-
-#confusion matrix
-table(pred=predict2,true=test$rank)
-
-#fraction of correct predictions
-mean(predict2==test$rank)
-
 
 #### T-test ####
 
