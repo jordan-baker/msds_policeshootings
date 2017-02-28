@@ -1,12 +1,13 @@
-setwd("/Users/jordanbaker/Documents/School/University of Virginia/Spring 2017/Machine Learning")
+setwd("/Users/frankiezeager/Documents/Graduate School/Spring 2017/Machine Learning/project 1/git/msds_policeshootings/data")
 
 library(readr)
 library(xlsx)
 library(plyr)
 library(dplyr)
 library(rpart)
+library(rpart.plot)
 
-set.seed(54)
+set.seed(545)
 
 #data sources
 #washington post: https://github.com/washingtonpost/data-police-shootings
@@ -24,6 +25,9 @@ clearances <- read.xlsx("clearance-rates.xls", 1)
 regions <- read.xlsx("regions.xlsx", 1)
 demo <- read_csv("demo-by-state.csv")
 
+####### Data Cleaning ##########
+
+### Washington Post Data ###
 #aggregate WP data by state
 #first convert categorical variables into dummy variable by level
 for(level in unique(crime$manner_of_death)){
@@ -67,7 +71,7 @@ crime %>% group_by(state)%>% summarise(pct_shot=mean(manner_of_death_shot),pct_s
 crime %>% group_by(state) %>% summarise(num_killed=n())->num_killed
 crime_by_state$num_killed<-num_killed$num_killed
 
-####### LEMAS Data #######
+### LEMAS Data ###
 lemas %>% group_by(STATECODE)%>% summarise(population=sum(POP2012,na.rm=TRUE),total_number_police=sum(FTSWORN,na.rm=TRUE)+sum(PTSWORN,na.rm=TRUE),num_white_police=sum(PERS_FTS_WHT,na.rm=TRUE),num_black_police=sum(PERS_FTS_BLK, na.rm=TRUE),num_hsp_police=sum(PERS_FTS_HSP,na.rm=TRUE),num_native_police=sum(PERS_FTS_IND,na.rm=TRUE),num_asian_police=sum(PERS_FTS_ASN,na.rm=TRUE), num_hawaii_police=sum(PERS_FTS_HAW,na.rm=TRUE),num_biracial_police=sum(PERS_FTS_TWO,na.rm=TRUE),num_unknown_race_police=sum(PERS_FTS_UNK,na.rm=TRUE))->lemas_by_state
 
 merged<-merge(crime_by_state,lemas_by_state,by.x='state',by.y='STATECODE')
@@ -75,6 +79,8 @@ merged<-merge(crime_by_state,lemas_by_state,by.x='state',by.y='STATECODE')
 #whites includes whites and hispanics (to be consistent with other data sources)
 merged$pct_police_white<-(merged$num_white_police+merged$num_hsp_police)/merged$total_number_police
 merged$pct_police_nonwhite<-(merged$num_asian_police+merged$num_black_police+merged$num_biracial_police+merged$num_hawaii_police+merged$num_native_police)/merged$total_number_police
+
+### Crimes data ###
 
 #keep the necessary columns for the crimes file
 #change column names for the crimes file
@@ -88,6 +94,8 @@ colnames(crimes) <- names
 #murder rate = # of murders / population
 crimes$ViolenceRate <- (crimes$ViolentCrime/crimes$Population)
 crimes$MurderRate <- (crimes$Murder/crimes$Population)
+
+### Clearance Rate Data ###
 
 #keep the necessary columns for the clearances file
 #change column names for the clearances file
@@ -114,26 +122,25 @@ colnames(aggstate) <- c("state", "violence_rate", "murder_rate", "violent_cleara
 #join aggstate with all other data
 police <- merge(aggstate, merged, by='state')
 
-#drop dc cuz nobody cares about it
-#(data came from metro)
+#drop dc bc the data came from the metro police, which for some reason included 0 murders
 police <- subset(police, police$state != 'DC')
 
-#output fully_merged
-#write.csv(fully_merged, 'fully_merged.csv')
 
-#define diversity
+#define diversity (is the police dept representative of the population demographics?)
 police$diversity <- police$pct_police_white - police$white
 
 #define killrate
 police$killrate <- police$num_killed/police$statepop
 
-#define diversity of the police force to the demographic breakdown of the state
+#k-means cluster police kill rates into two clusters (high and low)
 clusters <- kmeans(police$killrate, centers = 2)
 clusters
 
-#assign high, medium, and low diversity categories
+#assign high, medium, and low kill rate categories
 police$rank <- clusters$cluster
 police$rank <- ifelse(police$rank ==  1,'high', 'low')
+
+####### Model Building #######
 
 #split the model into testing and training data
 indices <- sample(seq_len(nrow(police)), size = 35)
