@@ -8,6 +8,7 @@ library(dplyr)
 library(rpart)
 library(rpart.plot)
 library(caret)
+library(rattle)
 
 set.seed(12002)
 
@@ -153,8 +154,9 @@ formula=as.formula(rank~violence_rate+murder_rate+violent_clearance+murder_clear
 trained_model<-train(formula,police,method='rpart')
 
 #look at tree
-plot(trained_model$finalModel)
-text(trained_model$finalModel)
+#in some instances you will have trouble generating the plot of the tree if the final tree is a root node
+#in these cases, just reset the seed until the actual tree is generated
+fancyRpartPlot(trained_model$finalModel)
 
 #text output of tree
 #1) root 50 9 low (0.1800000 0.8200000)  
