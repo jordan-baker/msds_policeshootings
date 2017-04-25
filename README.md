@@ -1,3 +1,8 @@
 # msds_policeshootings
-# ds6016 project 1: police shootings
-# group members: frankie zeager, jordan baker, andrew pomykalski, kerry jones
+
+## DS6016 Project: Exploration of the Relationship Between Police Killings and Ethnic Breakdown of Officers
+
+
+Authors
+-------
+Frankie Zeager, Jordan Baker, Andrew Pomykalski, Kerry Jones
